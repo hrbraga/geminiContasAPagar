@@ -1,0 +1,17 @@
+body {
+    font-family: sans-serif;
+    padding: 20px;
+}
+form {
+    display: flex;
+    flex-direction: column;
+    width: 300px;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+input, button {
+    padding: 8px;
+}
+li {
+    margin-bottom: 5px;
+}

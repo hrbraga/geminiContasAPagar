@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Categorias</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <h1>Gestão de Categorias e Subcategorias</h1>
+
+    <section>
+        <h2>Adicionar Nova Categoria</h2>
+        <form id="form-categoria">
+            <label for="nome-categoria">Nome da Categoria:</label>
+            <input type="text" id="nome-categoria" required>
+            <button type="submit">Adicionar Categoria</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Adicionar Subcategoria</h2>
+        <form id="form-subcategoria">
+            <label for="categoria-select">Selecione a Categoria:</label>
+            <select id="categoria-select" required></select>
+            
+            <label for="nome-subcategoria">Nome da Subcategoria:</label>
+            <input type="text" id="nome-subcategoria" required>
+            
+            <button type="submit">Adicionar Subcategoria</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Categorias Cadastradas</h2>
+        <ul id="lista-categorias"></ul>
+    </section>
+
+    <script src="../js/categorias.js"></script>z
+</body>
+</html>
