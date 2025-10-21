@@ -5,6 +5,7 @@ body {
     color: #333;
     margin: 0;
     padding: 20px;
+    padding-top: 20px;
 }
 
 h1 {
@@ -99,4 +100,146 @@ li span b {
     padding: 4px 8px;
     border-radius: 3px;
     font-size: 0.9em;
+}
+
+/* --- ESTILOS DA BARRA DE NAVEGAÇÃO (NAVBAR) --- */
+.navbar {
+    background-color: #333; /* Cor de fundo escura */
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between; /* Alinha logo à esquerda e links à direita */
+    align-items: center;
+    margin-bottom: 30px;
+    border-radius: 8px; /* Cantos arredondados */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #007bff; /* Destaca o nome do app */
+}
+
+.navbar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex; /* Coloca os links lado a lado */
+}
+
+.navbar li {
+    background: none; /* Remove o fundo branco do estilo anterior */
+    border: none;
+    padding: 0 15px;
+    margin-bottom: 0;
+    box-shadow: none;
+}
+
+.navbar a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.navbar a:hover {
+    color: #007bff; /* Mudar para a cor principal ao passar o mouse */
+}
+
+/* REGRAS BÁSICAS DA NAVBAR */
+.navbar {
+    background-color: #2c3e50; /* Um azul/cinza escuro */
+    color: white;
+    padding: 0 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.logo a {
+    font-size: 1.6em;
+    font-weight: bold;
+    color: #3498db; /* Azul claro para destaque */
+    text-decoration: none;
+    padding: 15px 0;
+    display: block;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+.nav-links > li {
+    padding: 0 15px;
+    position: relative; /* Essencial para o submenu */
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 15px 0;
+    display: block;
+    transition: background-color 0.3s;
+}
+
+.nav-links a:hover {
+    background-color: #34495e;
+}
+
+/* ESTILO DOS SUBMENUS (DROPDOWN) */
+.dropdown-menu {
+    display: none; /* Esconde o submenu por padrão */
+    position: absolute;
+    top: 100%; /* Abaixo do item principal */
+    left: 0;
+    background-color: #34495e; /* Fundo do submenu */
+    min-width: 200px;
+    z-index: 10;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    border-radius: 0 0 4px 4px;
+}
+
+.dropdown-menu li {
+    border-bottom: 1px solid #495e72;
+}
+
+.dropdown-menu li:last-child {
+    border-bottom: none;
+}
+
+.dropdown-menu a {
+    padding: 10px 15px;
+    white-space: nowrap; /* Impede que o texto quebre */
+}
+
+/* MOSTRAR O SUBMENU AO PASSAR O MOUSE */
+.dropdown:hover > .dropdown-menu {
+    display: block;
+}
+
+/* ESTILO DOS SUBMENUS DE NÍVEL 3 (Relatórios > Financeiro) */
+.dropdown-submenu {
+    position: relative;
+}
+
+.submenu {
+    display: none;
+    position: absolute;
+    left: 100%; /* Abre o submenu para a direita */
+    top: 0;
+    background-color: #34495e;
+    min-width: 150px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-submenu:hover > .submenu {
+    display: block;
 }
