@@ -310,3 +310,121 @@ li span b {
     color: #333;
     background: none; /* Remove o hover padrão do botão */
 }
+
+/* --- ESTILOS PARA A TABELA DE CONTAS --- */
+
+.tabela-container {
+    overflow-x: auto; /* Adiciona rolagem horizontal se a tabela for muito larga */
+    margin-top: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#tabela-contas {
+    width: 100%;
+    border-collapse: collapse; /* Remove espaços entre as células */
+}
+
+#tabela-contas th,
+#tabela-contas td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd; /* Linha separadora entre linhas */
+}
+
+#tabela-contas th {
+    background-color: #f2f2f2; /* Fundo cinza claro para o cabeçalho */
+    font-weight: bold;
+    color: #333;
+}
+
+/* Cor de fundo alternada para linhas (melhora legibilidade) */
+#tabela-contas tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#tabela-contas tbody tr:hover {
+    background-color: #eef; /* Destaque ao passar o mouse */
+}
+
+/* Estilo para a coluna de Valor (alinhar à direita) */
+#tabela-contas td:nth-child(5) {
+    text-align: right;
+    font-weight: bold;
+}
+
+/* Estilo para a coluna Situação */
+#tabela-contas td:nth-child(6) b {
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: white;
+    font-size: 0.9em;
+}
+
+/* Cores específicas para Situação */
+#tabela-contas td b.status-pendente {
+    background-color: #ffc107; /* Amarelo */
+    color: #333;
+}
+#tabela-contas td b.status-paga {
+    background-color: #28a745; /* Verde */
+}
+
+/* Estilo para a coluna de Ações */
+#tabela-contas td:nth-child(7) {
+    text-align: center;
+}
+
+/* Estilo para o botão "Dar Baixa" na tabela */
+.btn-baixa {
+    padding: 5px 10px;
+    font-size: 0.85em;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-baixa:hover {
+    background-color: #0056b3;
+}
+
+/* --- ESTILOS PARA PARCELAMENTO NO FORMULÁRIO --- */
+.parcelamento-fieldset {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px 15px;
+    margin-top: 10px; /* Adiciona espaço acima */
+}
+
+.parcelamento-fieldset legend {
+    font-weight: bold;
+    color: #555;
+    padding: 0 5px; /* Espaço em volta do texto da legenda */
+}
+
+.radio-group {
+    display: inline-block; /* Coloca os radios lado a lado */
+    margin-right: 20px;
+}
+
+.radio-group input[type="radio"] {
+    margin-right: 5px;
+    width: auto; /* Tamanho padrão do radio */
+}
+
+.radio-group label {
+    font-weight: normal; /* Remove negrito dos labels dos radios */
+    margin-bottom: 0;
+}
+
+#quantidade-parcelas-div {
+    margin-top: 10px; /* Espaço acima do campo quantidade */
+}
+
+#quantidade-parcelas {
+    max-width: 80px; /* Largura menor para o campo de quantidade */
+}

@@ -1,6 +1,7 @@
-// Este script será responsável por preencher os selects e enviar o formulário
+// frontend/js/script-contas.js
 
-// Função para buscar e preencher os fornecedores
+// --- FUNÇÕES DE CARREGAMENTO INICIAL ---
+
 async function carregarFornecedores() {
     try {
         const response = await fetch('http://localhost:3000/fornecedores');
@@ -10,17 +11,16 @@ async function carregarFornecedores() {
         select.innerHTML = '<option value="">Selecione...</option>';
         fornecedores.forEach(fornecedor => {
             const option = document.createElement('option');
-            option.value = fornecedor.id; // Usamos o ID do fornecedor
+            option.value = fornecedor.id;
             option.textContent = fornecedor.nome;
             select.appendChild(option);
         });
     } catch (error) {
         console.error('Erro ao carregar fornecedores:', error);
-        // Opcional: Mostrar erro na interface
+        alert('Erro ao carregar fornecedores. Verifique o servidor.');
     }
 }
 
-// Função para buscar e preencher categorias e subcategorias
 async function carregarCategorias() {
     try {
         const response = await fetch('http://localhost:3000/categorias');
@@ -30,8 +30,8 @@ async function carregarCategorias() {
         const selectSubcategoria = document.getElementById('subcategoria-select');
 
         selectCategoria.innerHTML = '<option value="">Selecione...</option>';
-        selectSubcategoria.innerHTML = '<option value="">Selecione uma categoria...</option>'; // Mensagem inicial
-        selectSubcategoria.disabled = true; // Desabilita subcategoria inicialmente
+        selectSubcategoria.innerHTML = '<option value="">Selecione uma categoria...</option>';
+        selectSubcategoria.disabled = true;
 
         categorias.forEach(categoria => {
             const option = document.createElement('option');
@@ -40,16 +40,15 @@ async function carregarCategorias() {
             selectCategoria.appendChild(option);
         });
 
-        // Evento para carregar subcategorias quando uma categoria é selecionada
         selectCategoria.addEventListener('change', (event) => {
             const categoriaId = event.target.value;
-            selectSubcategoria.innerHTML = '<option value="">Selecione...</option>'; // Limpa e adiciona opção padrão
-            selectSubcategoria.disabled = true; // Mantém desabilitado por padrão
+            selectSubcategoria.innerHTML = '<option value="">Selecione...</option>';
+            selectSubcategoria.disabled = true;
 
             if (categoriaId) {
                 const categoriaSelecionada = categorias.find(c => c.id == categoriaId);
-                if (categoriaSelecionada && categoriaSelecionada.subcategorias && categoriaSelecionada.subcategorias.length > 0) {
-                    selectSubcategoria.disabled = false; // Habilita se houver subcategorias
+                if (categoriaSelecionada?.subcategorias?.length > 0) {
+                    selectSubcategoria.disabled = false;
                     categoriaSelecionada.subcategorias.forEach(sub => {
                         const option = document.createElement('option');
                         option.value = sub.id;
@@ -57,127 +56,302 @@ async function carregarCategorias() {
                         selectSubcategoria.appendChild(option);
                     });
                 } else {
-                     selectSubcategoria.innerHTML = '<option value="">Nenhuma subcategoria</option>'; // Informa se não há subcategorias
+                     selectSubcategoria.innerHTML = '<option value="">Nenhuma subcategoria</option>';
                 }
             } else {
-                 selectSubcategoria.innerHTML = '<option value="">Selecione uma categoria...</option>'; // Volta à mensagem inicial
+                 selectSubcategoria.innerHTML = '<option value="">Selecione uma categoria...</option>';
             }
         });
     } catch (error) {
         console.error('Erro ao carregar categorias:', error);
-        // Opcional: Mostrar erro na interface
+        alert('Erro ao carregar categorias. Verifique o servidor.');
     }
 }
 
-// Função para enviar o formulário de lançamento de contas
+// --- CONTROLE DA INTERFACE DE PARCELAMENTO ---
+const radioParcelaUnica = document.getElementById('parcela-unica');
+const radioParcelaParcelada = document.getElementById('parcela-parcelada');
+const divQuantidadeParcelas = document.getElementById('quantidade-parcelas-div');
+const inputQuantidadeParcelas = document.getElementById('quantidade-parcelas');
+
+if (radioParcelaUnica && radioParcelaParcelada && divQuantidadeParcelas) {
+    radioParcelaUnica.addEventListener('change', () => {
+        if (radioParcelaUnica.checked) {
+            divQuantidadeParcelas.style.display = 'none';
+        }
+    });
+
+    radioParcelaParcelada.addEventListener('change', () => {
+        if (radioParcelaParcelada.checked) {
+            divQuantidadeParcelas.style.display = 'block';
+             if (inputQuantidadeParcelas) inputQuantidadeParcelas.focus(); // Foca no campo
+        }
+    });
+} else {
+    console.error("Elementos do controle de parcelamento não encontrados!");
+}
+
+
+// --- FUNÇÃO DE ENVIO DO FORMULÁRIO (LANÇAMENTO) ---
 document.getElementById('form-contas').addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    const novaConta = {
-        descricao: document.getElementById('descricao').value,
-        valor: document.getElementById('valor').value,
-        dataVencimento: document.getElementById('data-vencimento').value,
-        fornecedorId: document.getElementById('fornecedor-select').value,
-        categoriaId: document.getElementById('categoria-select').value,
-        subcategoriaId: document.getElementById('subcategoria-select').value || null // Pode ser nulo ou vazio
-    };
+    // --- Coleta de Dados ---
+    const descricao = document.getElementById('descricao').value.trim();
+    const dataEmissao = document.getElementById('data-emissao').value;
+    const notaFiscal = document.getElementById('nota-fiscal').value.trim();
+    const valorTotalStr = document.getElementById('valor').value;
+    const dataPrimeiroVencimento = document.getElementById('data-vencimento').value;
+    const fornecedorId = document.getElementById('fornecedor-select').value;
+    const categoriaId = document.getElementById('categoria-select').value;
+    const subcategoriaId = document.getElementById('subcategoria-select').value || null;
 
-     // Validação simples (pode ser mais robusta)
-     if (!novaConta.descricao || !novaConta.valor || !novaConta.dataVencimento || !novaConta.fornecedorId || !novaConta.categoriaId) {
-        alert('Por favor, preencha todos os campos obrigatórios.');
+    const tipoParcelamento = document.querySelector('input[name="tipoParcelamento"]:checked')?.value; // O '?' evita erro se nada estiver selecionado
+    let quantidadeParcelas = 1;
+    if (tipoParcelamento === 'parcelada') {
+        quantidadeParcelas = parseInt(inputQuantidadeParcelas?.value || '1', 10); // Pega valor ou 1 se inválido
+    }
+
+    // --- Validações ---
+    if (!descricao || !valorTotalStr || !dataPrimeiroVencimento || !fornecedorId || !categoriaId || !dataEmissao || !tipoParcelamento) {
+        alert('Por favor, preencha todos os campos obrigatórios (Descrição, Emissão, Valor, Vencimento, Fornecedor, Categoria, Parcelamento).');
+        return;
+    }
+    const valorTotal = parseFloat(valorTotalStr);
+    if (isNaN(valorTotal) || valorTotal <= 0) {
+        alert('Por favor, insira um Valor Total numérico e estritamente maior que zero (Ex: 0.01).');
+        document.getElementById('valor').focus();
+        return;
+    }
+     if (tipoParcelamento === 'parcelada' && (isNaN(quantidadeParcelas) || quantidadeParcelas < 2)) {
+        alert('Por favor, insira uma quantidade de parcelas válida (mínimo 2).');
+         if(inputQuantidadeParcelas) inputQuantidadeParcelas.focus();
+        return;
+    }
+     if (!dataPrimeiroVencimento) { // Validação redundante, mas segura
+        alert('Por favor, selecione a data do primeiro vencimento.');
         return;
     }
 
-    try {
-        const response = await fetch('http://localhost:3000/contas', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(novaConta)
-        });
+    // --- Preparação dos Lançamentos ---
+    const promessasDeLancamento = [];
+    const valorParcelaBase = parseFloat((valorTotal / quantidadeParcelas).toFixed(2));
+    let somaCalculada = 0; // Para ajustar a última parcela
 
-        if (response.ok) {
-            alert('Conta lançada com sucesso!');
-            document.getElementById('form-contas').reset(); // Limpa o formulário
-            // Reseta também o select de subcategorias
-            document.getElementById('subcategoria-select').innerHTML = '<option value="">Selecione uma categoria...</option>';
-            document.getElementById('subcategoria-select').disabled = true;
-            
-            carregarContas(); // Recarrega a lista de contas na página principal
-            formContainer.classList.remove('visivel'); // <-- FECHA O PAINEL AUTOMATICAMENTE
+    console.log(`Valor Total: ${valorTotal}, Qtde Parcelas: ${quantidadeParcelas}, Valor Base Parcela: ${valorParcelaBase}`);
+
+
+    for (let i = 1; i <= quantidadeParcelas; i++) {
+        let valorDaParcelaAtual = valorParcelaBase;
+        // Na última parcela, ajusta o valor para que a soma bata exatamente
+        if (i === quantidadeParcelas) {
+             valorDaParcelaAtual = parseFloat((valorTotal - somaCalculada).toFixed(2));
+             console.log(`Ajuste última parcela (${i}): ${valorDaParcelaAtual}`);
         } else {
-            // Tenta pegar uma mensagem de erro do backend, se houver
-            const errorData = await response.json().catch(() => ({}));
-            alert(`Erro ao lançar conta: ${errorData.message || 'Verifique os dados.'}`);
+            somaCalculada = parseFloat((somaCalculada + valorParcelaBase).toFixed(2)); // Acumula arredondado
+        }
+
+        // Calcular data de vencimento (adição de 30 dias pode ser imprecisa, melhor usar meses)
+        const dataVencimentoBase = new Date(dataPrimeiroVencimento + 'T00:00:00Z'); // Usar Z para UTC e evitar fuso
+        if(isNaN(dataVencimentoBase)) {
+            alert('Data do primeiro vencimento inválida.'); return;
+        }
+
+        // Adiciona meses corretamente, mantendo o dia (com cuidado para meses diferentes)
+        const dataVencimentoAtual = new Date(dataVencimentoBase);
+        if (i > 1) {
+             dataVencimentoAtual.setMonth(dataVencimentoBase.getMonth() + (i - 1));
+            // Correção para dias que não existem no mês resultante (ex: 31 em fevereiro)
+            if (dataVencimentoAtual.getDate() !== dataVencimentoBase.getDate()) {
+                 dataVencimentoAtual.setDate(0); // Vai para o último dia do mês anterior ao alvo
+            }
+        }
+
+        const ano = dataVencimentoAtual.getUTCFullYear();
+        const mes = String(dataVencimentoAtual.getUTCMonth() + 1).padStart(2, '0');
+        const dia = String(dataVencimentoAtual.getUTCDate()).padStart(2, '0');
+        const dataVencFormatada = `${ano}-${mes}-${dia}`;
+
+        const contaParcela = {
+            descricao: descricao + (quantidadeParcelas > 1 ? ` (${i}/${quantidadeParcelas})` : ''),
+            dataEmissao: dataEmissao,
+            notaFiscal: notaFiscal || null, // Envia null se vazio
+            valor: valorDaParcelaAtual.toFixed(2), // Envia sempre como string com 2 casas
+            dataVencimento: dataVencFormatada,
+            parcela: `${i}/${quantidadeParcelas}`,
+            fornecedorId: fornecedorId,
+            categoriaId: categoriaId,
+            subcategoriaId: subcategoriaId,
+        };
+
+        console.log("Enviando Parcela:", contaParcela);
+
+
+        promessasDeLancamento.push(
+            fetch('http://localhost:3000/contas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(contaParcela)
+            })
+        );
+    }
+
+    // --- Envio e Tratamento ---
+    try {
+        const respostas = await Promise.all(promessasDeLancamento);
+        const todasOk = respostas.every(res => res.ok);
+
+        if (todasOk) {
+            alert(`Lançamento(s) realizado(s) com sucesso! (${quantidadeParcelas} conta(s) registrada(s))`);
+            document.getElementById('form-contas').reset();
+            // Reset explícito dos controles de parcelamento e subcategoria
+            if(radioParcelaUnica) radioParcelaUnica.checked = true;
+            if(divQuantidadeParcelas) divQuantidadeParcelas.style.display = 'none';
+            const subSelect = document.getElementById('subcategoria-select');
+            if (subSelect) {
+                subSelect.innerHTML = '<option value="">Selecione uma categoria...</option>';
+                subSelect.disabled = true;
+            }
+
+            carregarContas();
+            const formCont = document.getElementById('form-container'); // Precisa re-selecionar aqui dentro?
+             if (formCont) {
+               formCont.classList.remove('visivel');
+            }
+        } else {
+             alert('Erro: Um ou mais lançamentos de parcela falharam. Verifique o console.');
+             for (let i=0; i < respostas.length; i++) {
+                if (!respostas[i].ok) {
+                    const errorData = await respostas[i].json().catch(() => ({}));
+                    console.error(`Falha no lançamento da parcela ${i+1}: Status ${respostas[i].status}`, errorData);
+                }
+            }
         }
     } catch (error) {
-        console.error('Erro de rede ao lançar conta:', error);
-        alert('Não foi possível conectar ao servidor para lançar a conta.');
+        console.error('Erro de rede ao lançar contas:', error);
+        alert('Não foi possível conectar ao servidor para lançar a(s) conta(s). Verifique a conexão e o servidor.');
     }
 });
 
-// Função para listar as contas a pagar
+
+// --- FUNÇÃO PARA CARREGAR CONTAS NA TABELA ---
 async function carregarContas() {
     try {
         const response = await fetch('http://localhost:3000/contas');
-        if (!response.ok) throw new Error('Falha ao buscar contas');
+        if (!response.ok) throw new Error(`Falha ao buscar contas (${response.status})`);
         const contas = await response.json();
-        const lista = document.getElementById('lista-contas');
-        lista.innerHTML = ''; // Limpa a lista antes de preencher
+        const tbody = document.getElementById('lista-contas-tbody');
+        if (!tbody) {
+            console.error('Elemento #lista-contas-tbody não encontrado!'); return;
+        }
+        tbody.innerHTML = '';
 
         if (contas.length === 0) {
-            lista.innerHTML = '<li>Nenhuma conta lançada ainda.</li>';
+            const tr = tbody.insertRow();
+            const td = tr.insertCell();
+            td.colSpan = 7; // Ajustar colspan se adicionar mais colunas
+            td.textContent = 'Nenhuma conta lançada ainda.';
+            td.style.textAlign = 'center';
             return;
         }
 
         contas.forEach(conta => {
-            const li = document.createElement('li');
-            // Formata a data (opcional, mas recomendado)
-            const dataVenc = new Date(conta.dataVencimento + 'T00:00:00'); // Adiciona T00:00:00 para evitar problemas de fuso
-            const dataFormatada = dataVenc.toLocaleDateString('pt-BR');
+            const tr = tbody.insertRow();
 
-            li.innerHTML = `
-                <span>
-                    Descrição: ${conta.descricao} | 
-                    Valor: R$ ${parseFloat(conta.valor).toFixed(2)} | 
-                    Vencimento: ${dataFormatada} | 
-                    Status: <b style="color:${conta.status === 'paga' ? 'green' : 'orange'}">${conta.status}</b> 
-                </span>
-                ${conta.status === 'pendente' ? `<button class="btn-baixa" onclick="confirmarBaixa(${conta.id})">Dar Baixa</button>` : ''} 
-            `; // Adicionado classe e função de confirmação
-            lista.appendChild(li);
+            // Formatação de Data de Vencimento
+            const dataVenc = new Date(conta.dataVencimento + 'T00:00:00Z'); // UTC
+            const dataFormatada = !isNaN(dataVenc) ? dataVenc.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Inválida';
+
+            // Formatação de Valor
+            const valorFormatado = parseFloat(conta.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            // Preenchimento das Células
+            tr.insertCell().textContent = conta.fornecedorNome || 'N/D';
+            tr.insertCell().textContent = conta.descricao;
+            tr.insertCell().textContent = dataFormatada;
+            tr.insertCell().textContent = conta.parcela || '-';
+            const valorCell = tr.insertCell();
+            valorCell.textContent = valorFormatado;
+            valorCell.style.textAlign = 'right';
+
+            // Situação
+            const situacaoCell = tr.insertCell();
+            const statusBadge = document.createElement('b');
+            statusBadge.textContent = conta.status.charAt(0).toUpperCase() + conta.status.slice(1);
+            statusBadge.classList.add(conta.status === 'paga' ? 'status-paga' : 'status-pendente');
+            situacaoCell.appendChild(statusBadge);
+            situacaoCell.style.textAlign = 'center';
+
+            // Ações
+            const acoesCell = tr.insertCell();
+             acoesCell.style.textAlign = 'center';
+            if (conta.status === 'pendente') {
+                const button = document.createElement('button');
+                button.textContent = 'Dar Baixa';
+                button.classList.add('btn-baixa');
+                button.setAttribute('data-conta-id', conta.id);
+                button.onclick = () => darBaixa(conta.id); // Chama diretamente darBaixa
+                acoesCell.appendChild(button);
+            } else {
+                acoesCell.textContent = 'Pago';
+            }
         });
     } catch (error) {
         console.error('Erro ao carregar contas:', error);
-        document.getElementById('lista-contas').innerHTML = '<li>Erro ao carregar a lista de contas. Verifique o servidor.</li>';
+        const tbody = document.getElementById('lista-contas-tbody');
+         if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Erro ao carregar contas: ${error.message}. Verifique o servidor.</td></tr>`;
+        }
     }
 }
 
 
-// --- CONTROLE DO PAINEL LATERAL ---
+// --- FUNÇÃO PARA DAR BAIXA ---
+async function darBaixa(id) {
+    if (!confirm(`Tem certeza que deseja marcar a conta ID ${id} como paga?`)) {
+        return;
+    }
 
+    try {
+        const response = await fetch(`http://localhost:3000/contas/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok) {
+            alert('Conta baixada com sucesso!');
+            carregarContas();
+        } else {
+             const errorData = await response.json().catch(() => ({ message: 'Erro ao tentar dar baixa.' }));
+             alert(`Erro ao dar baixa na conta: ${errorData.message}`);
+             console.error("Erro do backend ao dar baixa:", errorData);
+        }
+    } catch (error) {
+        console.error('Erro de rede ao dar baixa:', error);
+        alert('Não foi possível conectar ao servidor para dar baixa na conta.');
+    }
+}
+
+// --- CONTROLE DO PAINEL LATERAL ---
 const btnMostrarForm = document.getElementById('btn-mostrar-form');
 const btnFecharForm = document.getElementById('btn-fechar-form');
 const formContainer = document.getElementById('form-container');
 
-// Mostrar o painel ao clicar no botão "+ Incluir Conta"
-if (btnMostrarForm) {
+if (btnMostrarForm && formContainer) {
     btnMostrarForm.addEventListener('click', () => {
-        if (formContainer) {
-            formContainer.classList.add('visivel');
-        }
+        formContainer.classList.add('visivel');
     });
 }
-
-// Esconder o painel ao clicar no botão "X"
-if (btnFecharForm) {
+if (btnFecharForm && formContainer) {
     btnFecharForm.addEventListener('click', () => {
-        if (formContainer) {
-            formContainer.classList.remove('visivel');
-        }
+        formContainer.classList.remove('visivel');
     });
 }
 
-// Carrega fornecedores, categorias e contas ao carregar a página
-if (typeof carregarFornecedores === 'function') carregarFornecedores();
-if (typeof carregarCategorias === 'function') carregarCategorias();
-if (typeof carregarContas === 'function') carregarContas();
+// --- CARREGAMENTO INICIAL ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Garante que as funções existam antes de chamar
+    if (typeof carregarFornecedores === 'function') carregarFornecedores();
+    if (typeof carregarCategorias === 'function') carregarCategorias();
+    if (typeof carregarContas === 'function') carregarContas();
+});
