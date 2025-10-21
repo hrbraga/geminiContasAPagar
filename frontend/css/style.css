@@ -1,17 +1,102 @@
+/* GERAL E LAYOUT BÁSICO */
 body {
-    font-family: sans-serif;
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f7f6; /* Fundo cinza claro e suave */
+    color: #333;
+    margin: 0;
     padding: 20px;
 }
+
+h1 {
+    color: #007bff; /* Azul primário para títulos */
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+    margin-bottom: 30px;
+}
+
+h2 {
+    color: #555;
+    margin-top: 25px;
+    border-left: 5px solid #007bff;
+    padding-left: 10px;
+}
+
+/* ESTILO DOS FORMULÁRIOS */
 form {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
     display: flex;
     flex-direction: column;
-    width: 300px;
-    gap: 10px;
-    margin-bottom: 20px;
+    width: 100%;
+    max-width: 400px; /* Limita a largura dos formulários */
+    gap: 15px; /* Espaçamento entre os elementos */
 }
-input, button {
-    padding: 8px;
+
+label {
+    font-weight: bold;
+    margin-bottom: -10px; /* Reduz espaço entre label e input */
+    color: #333;
 }
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Garante que o padding não aumente o tamanho total */
+    transition: border-color 0.3s;
+}
+
+input:focus,
+select:focus {
+    border-color: #007bff; /* Borda azul ao focar */
+    outline: none;
+}
+
+/* ESTILO DOS BOTÕES */
+button {
+    background-color: #007bff;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #0056b3; /* Azul mais escuro ao passar o mouse */
+}
+
+/* ESTILO DAS LISTAS */
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
 li {
-    margin-bottom: 5px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between; /* Alinha o conteúdo e o botão de baixa */
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Estilo específico para o status de contas */
+li span b {
+    margin-left: 10px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 0.9em;
 }
