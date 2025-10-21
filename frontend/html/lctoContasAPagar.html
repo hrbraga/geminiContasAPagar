@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lançamento de Contas a Pagar</title>
-    <link rel="stylesheet" href="/frontend/css/style.css">
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <header>
     <nav class="navbar">
@@ -23,6 +24,7 @@
             <li class="dropdown">
                 <a href="#">Financeiro</a>
                 <ul class="dropdown-menu">
+                    <li><a href="cadPessoas.html">Fornecedores e Clientes</a></li>
                     <li><a href="#">Caixa e Bancos</a></li>
                     <li><a href="lancamento-contas.html">Contas a Pagar</a></li>
                     <li><a href="#">Contas a Receber</a></li>
@@ -58,13 +60,14 @@
         </ul>
     </nav>
 </header>
+
 <body>
     <h1>Lançamento de Contas a Pagar</h1>
 
     <form id="form-contas">
         <label for="descricao">Descrição:</label>
         <input type="text" id="descricao" required>
-        
+
         <label for="valor">Valor:</label>
         <input type="number" id="valor" step="0.01" required>
 
@@ -76,10 +79,10 @@
 
         <label for="categoria-select">Categoria:</label>
         <select id="categoria-select" required></select>
-        
+
         <label for="subcategoria-select">Subcategoria:</label>
         <select id="subcategoria-select"></select>
-        
+
         <button type="submit">Lançar Conta</button>
     </form>
 
@@ -88,4 +91,5 @@
 
     <script src="../js/script-contas.js"></script>
 </body>
+
 </html>

@@ -218,3 +218,17 @@ li span b {
     border-radius: 3px;
     font-size: 0.9em;
 }
+
+/* --- EFEITO HOVER PARA SUBMENUS --- */
+
+/* Hover para itens do menu dropdown (Nível 2) */
+.dropdown-menu a:hover {
+    background-color: #3498db; /* Azul claro (mesma cor do logo) */
+    color: white; /* Garante que o texto fique branco */
+}
+
+/* Hover para itens do submenu aninhado (Nível 3 - Relatórios) */
+.submenu a:hover {
+    background-color: #3498db; /* Azul claro */
+    color: white;
+}
