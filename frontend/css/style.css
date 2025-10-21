@@ -232,3 +232,81 @@ li span b {
     background-color: #3498db; /* Azul claro */
     color: white;
 }
+
+
+/* --- ESTILOS PARA O PAINEL LATERAL DE FORMULÁRIO --- */
+
+/* Container principal para melhor layout */
+.container {
+    padding: 0 20px; /* Adiciona padding lateral ao conteúdo principal */
+}
+
+/* Botão para mostrar o formulário */
+.btn-incluir {
+    background-color: #28a745; /* Verde */
+    margin-bottom: 20px;
+    padding: 10px 15px;
+    font-size: 1em;
+}
+
+.btn-incluir:hover {
+    background-color: #218838;
+}
+
+/* Estilo do painel lateral */
+.form-lateral {
+    position: fixed; /* Fica fixo na tela */
+    top: 0;
+    left: -100%; /* Começa totalmente fora da tela à esquerda */
+    width: 450px; /* Largura do painel */
+    max-width: 90%; /* Limita a largura em telas menores */
+    height: 100vh; /* Altura total da tela */
+    background-color: #ffffff;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    padding: 30px;
+    padding-top: 50px; /* Espaço para o botão de fechar */
+    overflow-y: auto; /* Permite rolagem se o conteúdo for grande */
+    transition: left 0.4s ease-in-out; /* Animação de deslize */
+    z-index: 1000; /* Garante que fique sobre outros elementos */
+    box-sizing: border-box;
+}
+
+/* Classe para mostrar o painel */
+.form-lateral.visivel {
+    left: 0; /* Move o painel para a posição visível */
+}
+
+/* Ajustes no formulário dentro do painel */
+.form-lateral form {
+    max-width: 100%; /* Ocupa a largura do painel */
+    box-shadow: none; /* Remove sombra interna */
+    padding: 0;
+    margin: 0;
+}
+.form-lateral h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #333;
+    border: none; /* Remove a borda padrão do h2 */
+    padding-left: 0;
+}
+
+
+/* Botão de fechar */
+.btn-fechar {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 2.5em; /* Tamanho do 'X' */
+    color: #aaa;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+}
+
+.btn-fechar:hover {
+    color: #333;
+    background: none; /* Remove o hover padrão do botão */
+}

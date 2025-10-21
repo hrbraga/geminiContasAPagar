@@ -7,87 +7,92 @@
     <title>Lançamento de Contas a Pagar</title>
     <link rel="stylesheet" href="../css/style.css">
 </head>
-<header>
-    <nav class="navbar">
-        <div class="logo"><a href="index.html">Meu ERP Simples</a></div>
-        <ul class="nav-links">
-            <li><a href="index.html">Página Inicial</a></li>
-
-            <li class="dropdown">
-                <a href="#">Vendas</a>
-                <ul class="dropdown-menu">
-                    <li><a href="#">Lançamento de Vendas</a></li>
-                    <li><a href="#">Pedidos e Orçamentos</a></li>
-                </ul>
-            </li>
-
-            <li class="dropdown">
-                <a href="#">Financeiro</a>
-                <ul class="dropdown-menu">
-                    <li><a href="cadPessoas.html">Fornecedores e Clientes</a></li>
-                    <li><a href="#">Caixa e Bancos</a></li>
-                    <li><a href="lancamento-contas.html">Contas a Pagar</a></li>
-                    <li><a href="#">Contas a Receber</a></li>
-                </ul>
-            </li>
-
-            <li class="dropdown">
-                <a href="#">Estoque</a>
-                <ul class="dropdown-menu">
-                    <li><a href="#">Entrada de Mercadorias</a></li>
-                    <li><a href="#">Movimentação de Mercadorias</a></li>
-                </ul>
-            </li>
-
-            <li class="dropdown">
-                <a href="#">Relatórios</a>
-                <ul class="dropdown-menu multi-level">
-                    <li class="dropdown-submenu">
-                        <a href="#">Financeiro</a>
-                        <ul class="submenu">
-                            <li><a href="#">Fluxo de Caixa</a></li>
-                            <li><a href="#">Balancete</a></li>
-                        </ul>
-                    </li>
-                    <li class="dropdown-submenu">
-                        <a href="#">Estoque</a>
-                        <ul class="submenu">
-                            <li><a href="#">Inventário</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </li>
-        </ul>
-    </nav>
-</header>
 
 <body>
-    <h1>Lançamento de Contas a Pagar</h1>
+    <header>
+        <nav class="navbar">
+            <div class="logo"><a href="index.html">Meu ERP Simples</a></div>
+            <ul class="nav-links">
+                <li><a href="index.html">Página Inicial</a></li>
+                <li class="dropdown">
+                    <a href="#">Vendas</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#">Lançamento de Vendas</a></li>
+                        <li><a href="#">Pedidos e Orçamentos</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Financeiro</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="cadPessoas.html">Fornecedores e Clientes</a></li>
+                        <li><a href="#">Caixa e Bancos</a></li>
+                        <li><a href="lctoContasAPagar.html">Contas a Pagar</a></li>
+                        <li><a href="#">Contas a Receber</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Estoque</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#">Entrada de Mercadorias</a></li>
+                        <li><a href="#">Movimentação de Mercadorias</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Relatórios</a>
+                    <ul class="dropdown-menu multi-level">
+                        <li class="dropdown-submenu">
+                            <a href="#">Financeiro</a>
+                            <ul class="submenu">
+                                <li><a href="#">Fluxo de Caixa</a></li>
+                                <li><a href="#">Balancete</a></li>
+                            </ul>
+                        </li>
+                        <li class="dropdown-submenu">
+                            <a href="#">Estoque</a>
+                            <ul class="submenu">
+                                <li><a href="#">Inventário</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </header>
 
-    <form id="form-contas">
-        <label for="descricao">Descrição:</label>
-        <input type="text" id="descricao" required>
+    <main class="container">
+        <h1>Lançamento de Contas a Pagar</h1>
 
-        <label for="valor">Valor:</label>
-        <input type="number" id="valor" step="0.01" required>
+        <button id="btn-mostrar-form" class="btn-incluir">+ Incluir Conta</button>
 
-        <label for="data-vencimento">Data de Vencimento:</label>
-        <input type="date" id="data-vencimento" required>
+        <div id="form-container" class="form-lateral">
+            <button id="btn-fechar-form" class="btn-fechar">&times;</button>
+            <h2>Nova Conta a Pagar</h2>
+            <form id="form-contas">
+                <label for="descricao">Descrição:</label>
+                <input type="text" id="descricao" required>
 
-        <label for="fornecedor-select">Fornecedor:</label>
-        <select id="fornecedor-select" required></select>
+                <label for="valor">Valor:</label>
+                <input type="number" id="valor" step="0.01" required>
 
-        <label for="categoria-select">Categoria:</label>
-        <select id="categoria-select" required></select>
+                <label for="data-vencimento">Data de Vencimento:</label>
+                <input type="date" id="data-vencimento" required>
 
-        <label for="subcategoria-select">Subcategoria:</label>
-        <select id="subcategoria-select"></select>
+                <label for="fornecedor-select">Fornecedor:</label>
+                <select id="fornecedor-select" required></select>
 
-        <button type="submit">Lançar Conta</button>
-    </form>
+                <label for="categoria-select">Categoria:</label>
+                <select id="categoria-select" required></select>
 
-    <h2>Contas Lançadas</h2>
-    <ul id="lista-contas"></ul>
+                <label for="subcategoria-select">Subcategoria:</label>
+                <select id="subcategoria-select"></select>
+
+                <button type="submit">Lançar Conta</button>
+            </form>
+        </div>
+
+        <h2>Contas Lançadas</h2>
+        <ul id="lista-contas"></ul>
+    </main>
 
     <script src="../js/script-contas.js"></script>
 </body>
