@@ -428,3 +428,51 @@ li span b {
 #quantidade-parcelas {
     max-width: 80px; /* Largura menor para o campo de quantidade */
 }
+
+/* --- ESTILOS ATUALIZADOS PARA BOTÕES DE AÇÃO NA TABELA --- */
+
+/* Estilo base comum para botões de ação */
+#tabela-contas .btn-acao {
+    padding: 6px 10px;
+    font-size: 0.9em;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    margin: 0 3px; /* Espaçamento entre botões */
+    color: white; /* Cor do emoji/texto */
+    line-height: 1; /* Para alinhar melhor emojis */
+    min-width: 35px; /* Largura mínima */
+}
+
+#tabela-contas .btn-acao:hover {
+    transform: scale(1.05); /* Efeito de leve aumento */
+}
+
+/* Botão Editar (Lápis Amarelo) */
+#tabela-contas .btn-editar {
+    background-color: #ffc107; /* Amarelo */
+    color: #333; /* Texto/emoji escuro para contraste */
+}
+#tabela-contas .btn-editar:hover {
+    background-color: #e0a800;
+}
+
+/* Botão Dar Baixa (Check Verde) - Renomeando a classe antiga */
+#tabela-contas .btn-baixar { /* Renomeado de btn-baixa */
+    background-color: #28a745; /* Verde */
+}
+#tabela-contas .btn-baixar:hover {
+    background-color: #218838;
+}
+
+/* --- ESTILOS ADICIONAIS PARA BOTÕES DE AÇÃO --- */
+
+/* Botão Excluir (Lixeira Vermelha) */
+#tabela-contas .btn-excluir {
+    background-color: #dc3545; /* Vermelho */
+    color: white; /* Emoji/ícone branco */
+}
+#tabela-contas .btn-excluir:hover {
+    background-color: #c82333; /* Vermelho mais escuro */
+}

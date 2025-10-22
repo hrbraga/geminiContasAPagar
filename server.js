@@ -265,6 +265,29 @@ app.put('/contas/:id', async (req, res) => {
     }
 });
 
+// Rota para EXCLUIR uma conta
+app.delete('/contas/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const contaExcluida = await Conta.findByIdAndDelete(id); // Encontra e deleta pelo ID
+
+        if (!contaExcluida) {
+            return res.status(404).json({ message: 'Conta não encontrada para exclusão.' });
+        }
+
+        console.log("Conta excluída:", contaExcluida);
+        // Retorna um status 200 (OK) ou 204 (No Content) para sucesso sem corpo
+        res.status(200).json({ message: 'Conta excluída com sucesso!', conta: contaExcluida });
+        // ou res.status(204).send();
+
+    } catch (err) {
+        console.error("Erro ao excluir conta:", err);
+        if (err.name === 'CastError') { // ID inválido
+             return res.status(400).json({ message: 'ID da conta inválido.' });
+         }
+        res.status(500).json({ message: 'Erro interno ao excluir a conta.' });
+    }
+});
 
 // --- Inicia o Servidor ---
 app.listen(PORT, () => {

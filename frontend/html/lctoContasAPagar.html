@@ -23,13 +23,13 @@
                 </li>
                 <li class="dropdown">
                     <a href="#">Financeiro</a>
-                     <ul class="dropdown-menu">
-                    <li><a href="#">Caixa e Bancos</a></li>
-                    <li><a href="lctoContasAPagar.html">Contas a Pagar</a></li>
-                    <li><a href="#">Contas a Receber</a></li>
-                    <li><a href="cadPessoas.html">Fornecedores e Clientes</a></li>
-                    <li><a href="categorias.html">Categorias</a></li>
-                </ul>
+                    <ul class="dropdown-menu">
+                        <li><a href="#">Caixa e Bancos</a></li>
+                        <li><a href="lctoContasAPagar.html">Contas a Pagar</a></li>
+                        <li><a href="#">Contas a Receber</a></li>
+                        <li><a href="cadPessoas.html">Fornecedores e Clientes</a></li>
+                        <li><a href="categorias.html">Categorias</a></li>
+                    </ul>
                 </li>
                 <li class="dropdown">
                     <a href="#">Estoque</a>
@@ -59,12 +59,12 @@
             </ul>
         </nav>
     </header>
-<main class="container">
-    <h1>Lançamento de Contas a Pagar</h1>
+    <main class="container">
+        <h1>Lançamento de Contas a Pagar</h1>
 
-    <button id="btn-mostrar-form" class="btn-incluir">+ Incluir Conta</button>
+        <button id="btn-mostrar-form" class="btn-incluir">+ Incluir Conta</button>
 
-    <div id="form-container" class="form-lateral">
+        <div id="form-container" class="form-lateral">
             <button id="btn-fechar-form" class="btn-fechar">&times;</button>
             <h2>Nova Conta a Pagar</h2>
             <form id="form-contas">
@@ -74,11 +74,12 @@
                 <label for="data-emissao">Data de Emissão:</label>
                 <input type="date" id="data-emissao" required>
 
-                 <label for="nota-fiscal">Número da Nota Fiscal:</label>
+                <label for="nota-fiscal">Número da Nota Fiscal:</label>
                 <input type="text" id="nota-fiscal">
 
                 <label for="valor">Valor Total (R$):</label>
-                <input type="number" id="valor" step="0.01" min="0.01" required> <label for="data-vencimento">Vencimento (1ª Parcela):</label>
+                <input type="text" id="valor" inputmode="decimal" required placeholder="0,00">
+                <label for="data-vencimento">Vencimento (1ª Parcela):</label>
                 <input type="date" id="data-vencimento" required>
 
                 <fieldset class="parcelamento-fieldset">
@@ -93,7 +94,8 @@
                     </div>
                 </fieldset>
 
-                <div id="quantidade-parcelas-div" style="display: none;"> <label for="quantidade-parcelas">Quantidade de Parcelas:</label>
+                <div id="quantidade-parcelas-div" style="display: none;"> <label for="quantidade-parcelas">Quantidade de
+                        Parcelas:</label>
                     <input type="number" id="quantidade-parcelas" min="2" value="2">
                 </div>
                 <label for="fornecedor-select">Fornecedor:</label>
@@ -109,27 +111,28 @@
             </form>
         </div>
 
-    <h2>Contas Lançadas</h2>
-    <div class="tabela-container"> <table id="tabela-contas">
-            <thead>
-                <tr>
-                    <th>Fornecedor</th>
-                    <th>Descrição</th>
-                    <th>Vencimento</th>
-                    <th>Parcela</th>
-                    <th>Valor (R$)</th>
-                    <th>Situação</th>
-                    <th>Ações</th> </tr>
-            </thead>
-            <tbody id="lista-contas-tbody">
+        <h2>Contas Lançadas</h2>
+        <div class="tabela-container">
+            <table id="tabela-contas">
+                <thead>
+                    <tr>
+                        <th>Fornecedor</th>
+                        <th>Descrição</th>
+                        <th>Vencimento</th>
+                        <th>Parcela</th>
+                        <th>Valor (R$)</th>
+                        <th>Situação</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-contas-tbody">
                 </tbody>
-        </table>
-    </div>
-</main>
-
-<script src="../js/script-contas.js"></script>
+            </table>
+        </div>
+    </main>
 
     <script src="../js/script-contas.js"></script>
+
 </body>
 
 </html>
