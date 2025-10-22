@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Configuração do Formulário ---
-    const formConta = document.getElementById('form-conta');
+    const formConta = document.getElementById('form-contas');
     if (formConta) {
         formConta.addEventListener('submit', validarEAdicionarConta);
     } else {
