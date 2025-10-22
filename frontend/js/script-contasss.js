@@ -73,47 +73,28 @@ if (radioParcelaUnica && radioParcelaParcelada && divQuantidadeParcelas) {
 const valorInput = document.getElementById('valor-total');
 
 function formatarMoeda(input) {
-    // Recebe o elemento input (input DOM) e formata para "1.234,56"
-    // Retorna o valor numérico (Number) correspondente, ex: 1234.56
-    if (!input) return 0;
-    let val = String(input.value || '').replace(/\D/g, ''); // apenas dígitos
-    if (val === '') {
-        input.value = '';
-        return 0;
+    let valor = input.value.replace(/\D/g, ''); // Remove tudo que não for dígito
+    if (valor === '') {
+        input.value = ''; // Permite apagar tudo
+        return 0; // Retorna 0 se vazio
     }
-    // garante pelo menos 3 dígitos (centavos)
-    val = val.padStart(3, '0');
-    const centavos = val.slice(-2);
-    let reais = val.slice(0, -2);
+
+    // Adiciona zeros à esquerda se necessário (para começar pelos centavos)
+    valor = valor.padStart(3, '0'); // Garante pelo menos 3 dígitos (ex: 50 -> 050)
+
+    // Separa centavos e reais
+    let centavos = valor.slice(-2);
+    let reais = valor.slice(0, -2);
+
+    // Adiciona separador de milhar
     reais = reais.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    input.value = reais + ',' + centavos;
-    const reaisNumeros = reais.replace(/\./g, '') || '0';
-    return parseFloat(reaisNumeros + '.' + centavos);
+
+    // Monta o valor formatado
+    input.value = `${reais},${centavos}`;
+
+    // Retorna o valor numérico para validação/cálculo
+    return parseFloat(`${reais}.${centavos}`);
 }
-
-
-function parseValorFormatado(valorStr) {
-    if (valorStr === null || valorStr === undefined) return NaN;
-    // Remove pontos de milhar e troca vírgula por ponto decimal
-    const cleaned = String(valorStr).replace(/\./g, '').replace(',', '.').trim();
-    const num = parseFloat(cleaned);
-    return isNaN(num) ? NaN : num;
-}
-// Adiciona zeros à esquerda se necessário (para começar pelos centavos)
-valor = valor.padStart(3, '0'); // Garante pelo menos 3 dígitos (ex: 50 -> 050)
-
-// Separa centavos e reais
-let centavos = valor.slice(-2);
-let reais = valor.slice(0, -2);
-
-// Adiciona separador de milhar
-reais = reais.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-
-// Monta o valor formatado
-input.value = `${reais},${centavos}`;
-
-// Retorna o valor numérico para validação/cálculo
-return parseFloat(`${reais}.${centavos}`);
 
 if (valorInput) {
     valorInput.addEventListener('input', (e) => {
@@ -178,8 +159,12 @@ if (formContas) {
 
         // VALIDAÇÃO VALOR > 0 (usando valor numérico obtido da formatação)
         // Crie esta função em algum lugar do seu script (fora de outras funções)
+        function limparValor() {
+            // Se 'valor' for o ID do seu campo de valor
+            document.getElementById('valor-total').value = '';
+        }
         // Precisamos chamar a formatação aqui para obter o número correto
-        const valorNumerico = valorInput ? parseValorFormatado(valorFormatado || '0') : NaN; // Limpa o valor formatado
+        const valorNumerico = valorInput ? parseFloat(limparValor(valorFormatado || '0')) : NaN; // Limpa o valor formatado
         if (isNaN(valorNumerico) || valorNumerico <= 0) {
             missing.push("Valor Total (deve ser positivo)");
         }
@@ -225,7 +210,7 @@ if (formContas) {
             const dataVencimentoAtual = new Date(dataVencBase);
             if (i > 1) {
                 dataVencimentoAtual.setUTCMonth(dataVencBase.getUTCMonth() + (i - 1));
-                if (dataVencimentoAtual.getUTCDate() < dataVencBase.getUTCDate() && dataVencBase.getUTCMonth() !== (dataVencimentoAtual.getUTCMonth() + 1) % 12) {
+                if (dataVencimentoAtual.getUTCDate() < dataVencBase.getUTCDate() && dataVencimentoBase.getUTCMonth() !== (dataVencimentoAtual.getUTCMonth() + 1) % 12) {
                     dataVencimentoAtual.setUTCDate(0);
                 }
             }
