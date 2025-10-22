@@ -1,461 +1,589 @@
-// frontend/js/script-contas.js
+// Aguarda o DOM carregar
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM carregado, iniciando...");
 
-// --- FUNÇÕES DE CARREGAMENTO INICIAL (Fornecedores, Categorias) ---
-async function carregarFornecedores() {
-    try {
-        const response = await fetch('http://localhost:3000/fornecedores');
-        if (!response.ok) throw new Error('Falha ao buscar fornecedores');
-        const fornecedores = await response.json();
-        const select = document.getElementById('fornecedor-select');
-        if (!select) return;
-        select.innerHTML = '<option value="">Selecione...</option>';
-        fornecedores.forEach(fornecedor => {
-            const option = document.createElement('option');
-            option.value = fornecedor._id;
-            option.textContent = fornecedor.nome;
-            select.appendChild(option);
+    // Tenta configurar máscara de moeda
+    configurarMascaraValor();
+
+    // Tenta configurar o formulário
+    configurarFormulario();
+
+    // Tenta configurar a tabela
+    configurarTabela();
+
+    // Tenta configurar as categorias
+    configurarCategorias();
+
+    // Tenta carregar dados iniciais (funções devem estar definidas globalmente ou importadas)
+    if (typeof carregarFornecedores === 'function') {
+        carregarFornecedores();
+    } else {
+        console.warn("Função carregarFornecedores não encontrada.");
+    }
+    if (typeof carregarCategorias === 'function') {
+        carregarCategorias(); // Para preencher o select de categoria
+    } else {
+        console.warn("Função carregarCategorias não encontrada.");
+    }
+    // A função carregarContas pertence à página de listagem, não deve ser chamada aqui
+    // if (typeof carregarContas === 'function') carregarContas();
+});
+
+
+// --- FUNÇÕES DE CONFIGURAÇÃO ---
+
+function configurarMascaraValor() {
+    const valorTotalInput = document.getElementById('valor-total');
+    if (valorTotalInput) {
+        console.log("Configurando máscara para #valor-total...");
+        valorTotalInput.addEventListener('input', formatarMoedaInput);
+    }
+}
+
+function configurarFormulario() {
+    const formConta = document.getElementById('form-conta');
+    if (formConta) {
+        formConta.addEventListener('submit', validarEAdicionarConta);
+        console.log("Listener de SUBMIT adicionado ao #form-conta.");
+
+        // Adiciona listener para os radios de pagamento para mostrar/ocultar parcelas
+        const radiosPagamento = formConta.querySelectorAll('input[name="tipoPagamento"]');
+        radiosPagamento.forEach(radio => {
+            radio.addEventListener('change', toggleNumeroParcelas);
         });
-    } catch (error) { console.error('Erro ao carregar fornecedores:', error); alert('Erro ao carregar fornecedores.'); }
+        // Chama uma vez para garantir estado inicial correto
+        toggleNumeroParcelas();
+    }
+}
+
+function configurarTabela() {
+    const tabelaContas = document.getElementById('tabela-contas');
+    if (tabelaContas) {
+        tabelaContas.addEventListener('click', gerenciarBotosTabela);
+        console.log("Listener de CLICK adicionado a #tabela-contas.");
+    }
+}
+
+function configurarCategorias() {
+    const categoriaSelect = document.getElementById('categoria-select'); // Usa o ID correto
+    if (categoriaSelect) {
+        categoriaSelect.addEventListener('change', atualizarSubcategorias);
+        atualizarSubcategorias(); // Chama no início
+        console.log("Listener de CHANGE adicionado a #categoria-select.");
+    }
+}
+
+// --- FUNÇÕES AUXILIARES ---
+
+function formatarMoedaInput(e) {
+    let value = e.target.value;
+    value = value.replace(/\D/g, "");
+    if (value === "") {
+        e.target.value = '';
+        return;
+    }
+    value = (parseFloat(value) / 100);
+    e.target.value = value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function toggleNumeroParcelas() {
+    const formConta = document.getElementById('form-conta');
+    if (!formConta) return;
+
+    const radioParcelado = formConta.querySelector('#tipoPagamentoParcelado');
+    const divParcelas = document.getElementById('div-numero-parcelas');
+    const inputParcelas = document.getElementById('numeroParcelas');
+
+    if (divParcelas && inputParcelas) {
+        if (radioParcelado && radioParcelado.checked) {
+            divParcelas.style.display = 'block';
+            inputParcelas.required = true;
+        } else {
+            divParcelas.style.display = 'none';
+            inputParcelas.required = false;
+            inputParcelas.value = '';
+        }
+    }
+}
+
+
+/**
+ * Atualiza as opções do select de sub-categoria baseado na categoria selecionada.
+ */
+async function atualizarSubcategorias() {
+    const categoriaSelect = document.getElementById('categoria-select'); // ID correto
+    const subcategoriaSelect = document.getElementById('subcategoria-select'); // ID correto
+
+    if (!categoriaSelect || !subcategoriaSelect) return;
+
+    const categoriaId = categoriaSelect.value;
+    subcategoriaSelect.innerHTML = '<option value="">Carregando...</option>';
+    subcategoriaSelect.disabled = true;
+
+    if (!categoriaId) {
+        subcategoriaSelect.innerHTML = '<option value="">Selecione categoria</option>';
+        return;
+    }
+
+    try {
+        // Assume que o endpoint retorna as subcategorias filtradas pelo ID da categoria
+        const response = await fetch(`http://localhost:3000/categorias/${categoriaId}/subcategorias`);
+        if (!response.ok) {
+           throw new Error(`Erro ${response.status} ao buscar subcategorias.`);
+        }
+        const subcategorias = await response.json();
+
+        if (subcategorias && subcategorias.length > 0) {
+            subcategoriaSelect.innerHTML = '<option value="">Selecione...</option>';
+            subcategorias.forEach(sub => {
+                const option = new Option(sub.nome, sub._id); // Texto, Valor
+                subcategoriaSelect.add(option);
+            });
+            subcategoriaSelect.disabled = false;
+        } else {
+            subcategoriaSelect.innerHTML = '<option value="">Nenhuma subcategoria</option>';
+            subcategoriaSelect.disabled = true;
+        }
+
+    } catch (error) {
+        console.error("Erro ao carregar subcategorias:", error);
+        subcategoriaSelect.innerHTML = '<option value="">Erro ao carregar</option>';
+        subcategoriaSelect.disabled = true;
+        // alert(`Não foi possível carregar as subcategorias: ${error.message}`);
+    }
+}
+
+
+/**
+ * Valida os dados do formulário e, se válidos, chama a função para salvar no backend.
+ */
+function validarEAdicionarConta(event) {
+    console.log("validarEAdicionarConta INICIADA!");
+    event.preventDefault();
+
+    const form = event.target;
+    const descricaoInput = form.querySelector('#descricao');
+    const valorInput = form.querySelector('#valor-total');
+    const vencimentoInput = form.querySelector('#data-vencimento');
+    const categoriaSelect = form.querySelector('#categoria-select'); // ID correto
+    const subcategoriaSelect = form.querySelector('#subcategoria-select'); // ID correto
+    const fornecedorSelect = form.querySelector('#fornecedor-select'); // ID correto
+    const notaFiscalInput = form.querySelector('#nota-fiscal');
+    const radioParcelaUnica = form.querySelector('#tipoPagamentoUnica');
+    const radioParcelado = form.querySelector('#tipoPagamentoParcelado');
+    const numeroParcelasInput = form.querySelector('#numeroParcelas');
+    const observacaoTextarea = form.querySelector('#observacao');
+
+    console.log("Coletando dados...");
+    let erros = [];
+
+    // --- Validações ---
+    console.log("Iniciando validações...");
+
+    // [VALIDAÇÃO VALOR TOTAL]
+    const valorString = valorInput.value;
+    // Remove "R$", pontos de milhar, troca vírgula decimal por ponto e remove espaços
+    const valorLimpo = valorString.replace("R$", "").replace(/\./g, "").replace(",", ".").trim();
+    const valorNumerico = parseFloat(valorLimpo); // Primeira declaração
+
+    if (valorString.trim() === '' || isNaN(valorNumerico) || valorNumerico <= 0) {
+        console.error(`Validação Valor Total falhou. Input: "${valorString}", Limpo: "${valorLimpo}", Num: ${valorNumerico}`);
+        erros.push("Valor Total inválido (deve ser preenchido e maior que zero).");
+    }
+
+    // [VALIDAÇÃO DESCRIÇÃO]
+    if (!descricaoInput.value || descricaoInput.value.trim() === "") {
+        erros.push("O campo Descrição é obrigatório.");
+    }
+
+    // [VALIDAÇÃO VENCIMENTO]
+    if (!vencimentoInput.value || vencimentoInput.value.trim() === "") {
+        erros.push("O campo Vencimento é obrigatório.");
+    } else if (!/^\d{2}\/\d{2}\/\d{4}$/.test(vencimentoInput.value.trim())) {
+         erros.push("Formato de Data de Vencimento inválido (use dd/mm/AAAA).");
+    }
+
+    // [VALIDAÇÃO CATEGORIA]
+    if (!categoriaSelect.value || categoriaSelect.value === "") {
+        erros.push("O campo Categoria é obrigatório.");
+    }
+
+    // [VALIDAÇÃO CONDICIONAL SUB-CATEGORIA]
+    const subcategoriaHabilitada = !subcategoriaSelect.disabled;
+    if (categoriaSelect.value && subcategoriaHabilitada && (!subcategoriaSelect.value || subcategoriaSelect.value === "")) {
+        erros.push("Para esta Categoria, a Sub-categoria é obrigatória.");
+    }
+
+    // [VALIDAÇÃO FORNECEDOR]
+    if (!fornecedorSelect.value || fornecedorSelect.value === "") {
+         erros.push("O campo Fornecedor é obrigatório.");
+    }
+
+    // [VALIDAÇÃO TIPO PAGAMENTO E PARCELAS]
+    let tipoPagamento = '';
+    let numeroParcelas = null;
+    if (radioParcelaUnica && radioParcelado) {
+        if (radioParcelaUnica.checked) {
+            tipoPagamento = 'unica';
+        } else if (radioParcelado.checked) {
+            tipoPagamento = 'parcelado';
+            const parcelasStr = numeroParcelasInput ? numeroParcelasInput.value : '';
+            numeroParcelas = parseInt(parcelasStr, 10);
+            if (isNaN(numeroParcelas) || numeroParcelas <= 1) {
+                if (document.getElementById('div-numero-parcelas')?.style.display !== 'none') {
+                   erros.push("Número de Parcelas inválido (deve ser maior que 1).");
+                }
+            }
+        } else {
+            erros.push("Selecione o Tipo de Pagamento (Única ou Parcelado).");
+        }
+    } else {
+         console.warn("Radios de tipo de pagamento não encontrados.");
+    }
+
+    // --- Mostrar Erros ou Continuar ---
+    if (erros.length > 0) {
+        console.error("Validação falhou:", erros);
+        alert("Campos inválidos ou faltando:\n\n- " + erros.join("\n- "));
+        // Foca no primeiro campo com erro
+        // ... (lógica de foco omitida para brevidade, mantenha a sua)
+        return;
+    }
+
+    console.log("Validações OK. Preparando dados para salvar...");
+
+    // --- Preparar Dados ---
+    // *** ERRO ESTÁ AQUI ***
+    // Você declarou 'const valorNumerico' novamente. Renomeie ou remova o 'const'.
+    // Vou usar a variável 'valorNumerico' já existente.
+    // const valorNumerico = parseFloat(valorLimpo); // REMOVA OU RENOMEIE esta linha 
+
+    const novaConta = {
+        descricao: descricaoInput.value.trim(),
+        valor: valorNumerico, // Usa a variável declarada no início da validação
+        dataVencimento: vencimentoInput.value.trim(),
+        categoria: categoriaSelect.value, // Envia o ID da categoria
+        subcategoria: subcategoriaSelect.disabled ? null : subcategoriaSelect.value, // Envia o ID da subcategoria
+        fornecedor: fornecedorSelect.value, // Envia o ID do fornecedor
+        notaFiscal: notaFiscalInput.value.trim(),
+        tipoPagamento: tipoPagamento,
+        numeroParcelas: tipoPagamento === 'parcelado' ? numeroParcelas : null,
+        observacao: observacaoTextarea ? observacaoTextarea.value.trim() : '',
+    };
+
+    console.log("Nova conta:", novaConta);
+
+    // --- Chamar Backend ---
+    salvarContaNoBackend(novaConta);
+}
+
+// --- FUNÇÕES DE INTERAÇÃO COM BACKEND ---
+
+async function salvarContaNoBackend(conta) {
+    console.log("Enviando conta para o backend:", conta);
+    document.body.style.cursor = 'wait'; // Feedback visual
+    try {
+        const response = await fetch('http://localhost:3000/contas', { // Rota da API para criar conta
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(conta)
+        });
+
+        document.body.style.cursor = 'default';
+
+        if (!response.ok) {
+            let errorData;
+            try { errorData = await response.json(); }
+            catch(e) { errorData = { message: `Erro HTTP ${response.status} - ${response.statusText}` }; }
+            console.error('Erro do backend ao salvar:', errorData);
+            throw new Error(errorData.message || 'Erro desconhecido ao salvar conta');
+        }
+
+        const contaSalva = await response.json();
+        console.log('Conta salva com sucesso:', contaSalva);
+        alert('Conta lançada com sucesso!');
+
+        // Limpar formulário e resetar subcategoria
+        const form = document.getElementById('form-conta');
+        if (form) form.reset();
+        atualizarSubcategorias();
+        toggleNumeroParcelas(); // Garante que o campo parcelas seja ocultado
+
+        // Fechar o painel lateral (se existir)
+        const formContainer = document.getElementById('form-container');
+        formContainer?.classList.remove('visivel');
+
+        // Atualizar a tabela SE ela existir nesta página (caso raro, mas possível)
+        if (document.getElementById('tabela-contas')) {
+             adicionarLinhaNaTabela(contaSalva);
+             ordenarTabela();
+        }
+        // É mais comum redirecionar ou ter a tabela na própria página de lançamento
+        // Se a tabela estiver em contasAPagar.html, ela será atualizada ao carregar aquela página.
+
+
+    } catch (error) {
+        document.body.style.cursor = 'default';
+        console.error('Erro ao salvar conta:', error);
+        alert('Falha ao salvar a conta: ' + error.message);
+    }
+}
+
+// --- FUNÇÕES DA TABELA (Listagem e Ações) ---
+// Estas funções são mais relevantes para contasAPagar.html, mas podem ser chamadas
+// se a tabela estiver presente na página de lançamento também.
+
+/**
+ * Adiciona uma nova linha na tabela de contas.
+ */
+function adicionarLinhaNaTabela(conta) {
+    const tbody = document.getElementById('tabela-contas')?.getElementsByTagName('tbody')[0];
+    if (!tbody) return;
+
+    const newRow = tbody.insertRow();
+
+    // Formata data
+    let dataVencFormatada = conta.dataVencimento || 'N/A';
+    try {
+        if (conta.dataVencimento && (conta.dataVencimento.includes('T') || conta.dataVencimento.includes('-'))) {
+           const data = new Date(conta.dataVencimento);
+           const dia = String(data.getUTCDate()).padStart(2, '0');
+           const mes = String(data.getUTCMonth() + 1).padStart(2, '0');
+           const ano = data.getUTCFullYear();
+           dataVencFormatada = `${dia}/${mes}/${ano}`;
+        }
+    } catch(e) { console.error("Erro ao formatar data:", conta.dataVencimento, e); }
+
+    // Formata valor
+    const valorFormatado = (typeof conta.valor === 'number')
+        ? conta.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+        : 'R$ -';
+
+    // Preenche células (AJUSTE A ORDEM SE NECESSÁRIO)
+    newRow.insertCell(0).textContent = conta.descricao || 'N/A';
+    newRow.insertCell(1).textContent = valorFormatado;
+    newRow.insertCell(2).textContent = dataVencFormatada;
+    // Precisa buscar nome da categoria/subcategoria ou exibir IDs?
+    // Assumindo que o backend pode popular os nomes:
+    newRow.insertCell(3).textContent = conta.categoria?.nome || conta.categoria || 'N/A'; // Exibe nome se populado, senão ID
+    newRow.insertCell(4).textContent = conta.status || 'pendente';
+
+    // Célula de Ações
+    const cellAcoes = newRow.insertCell(5);
+    cellAcoes.classList.add('acoes');
+    const contaId = conta._id || conta.id || '';
+    const isPaga = conta.status === 'pago';
+
+    cellAcoes.innerHTML = `
+        <button class="btn btn-sm btn-info btn-editar" data-id="${contaId}" title="Editar">✏️</button>
+        <button class="btn btn-sm btn-danger btn-excluir" data-id="${contaId}" title="Excluir">🗑️</button>
+        ${!isPaga ? `<button class="btn btn-sm btn-success btn-pagar" data-id="${contaId}" title="Marcar como Pago">✔️</button>` : ''}
+    `;
+}
+
+/**
+ * Gerencia cliques nos botões da tabela.
+ */
+function gerenciarBotosTabela(event) {
+    const target = event.target.closest('button');
+    if (!target) return;
+
+    const contaId = target.dataset.id;
+    const linha = target.closest('tr');
+
+    if (target.classList.contains('btn-excluir')) {
+        if (confirm(`Tem certeza que deseja excluir esta conta?\nID: ${contaId || 'N/A'}`)) {
+            if (contaId) {
+                 excluirContaNoBackend(contaId, linha);
+            } else {
+                 linha?.remove(); // Permite remover linha mesmo sem ID (teste)
+            }
+        }
+    } else if (target.classList.contains('btn-editar')) {
+        console.log('Editar conta ID:', contaId);
+        alert('Funcionalidade Editar não implementada.');
+        // Ex: abrirModalEdicao(contaId); ou redirecionar
+
+    } else if (target.classList.contains('btn-pagar')) {
+         if (confirm(`Marcar esta conta como paga?\nID: ${contaId}`)) {
+            console.log('Pagar conta ID:', contaId);
+            if (contaId) {
+                marcarContaComoPaga(contaId, linha, target);
+            } else {
+                 alert("Não é possível marcar como paga: ID da conta não encontrado.");
+            }
+         }
+    }
+}
+
+/**
+ * Exclui conta no backend e remove linha da tabela se sucesso.
+ */
+async function excluirContaNoBackend(id, tableRow) {
+    if (!id) return alert("Erro: ID da conta não encontrado para exclusão.");
+    console.log(`Tentando excluir conta com ID: ${id}`);
+    document.body.style.cursor = 'wait';
+    try {
+        const response = await fetch(`http://localhost:3000/contas/${id}`, { method: 'DELETE' }); // Rota da API
+        document.body.style.cursor = 'default';
+
+        if (!response.ok) {
+            let errorData;
+            try { errorData = await response.json(); }
+            catch(e) { errorData = { message: `Erro HTTP ${response.status}` }; }
+            console.error('Erro do backend ao excluir:', errorData);
+            throw new Error(errorData.message || 'Erro ao excluir conta');
+        }
+        console.log('Conta excluída com sucesso no backend:', id);
+        if (tableRow) {
+            tableRow.remove(); // Remove a linha da UI
+            console.log('Linha removida da tabela.');
+        }
+        alert('Conta excluída com sucesso!');
+        // Opcional: Recarregar contas se a lógica de remoção falhar
+        // if (typeof carregarContas === 'function') carregarContas();
+
+    } catch(error) {
+        document.body.style.cursor = 'default';
+        console.error('Erro na requisição para excluir conta:', error);
+        alert('Falha ao excluir conta: ' + error.message);
+    }
+}
+
+
+/**
+ * Marca conta como paga no backend e atualiza a UI se sucesso.
+ */
+async function marcarContaComoPaga(id, tableRow, button) {
+     if (!id) return alert("Erro: ID da conta não encontrado para marcar como paga.");
+     console.log(`Tentando marcar como paga a conta com ID: ${id}`);
+     document.body.style.cursor = 'wait';
+     try {
+        // Rota da API para marcar como paga (verifique seu backend)
+        const response = await fetch(`http://localhost:3000/contas/${id}/pagar`, { method: 'PATCH' });
+        document.body.style.cursor = 'default';
+
+        if (!response.ok) {
+            let errorData;
+            try { errorData = await response.json(); }
+            catch(e) { errorData = { message: `Erro HTTP ${response.status}` }; }
+            console.error('Erro do backend ao marcar como paga:', errorData);
+            throw new Error(errorData.message || 'Erro ao marcar como paga');
+        }
+        const contaAtualizada = await response.json();
+        console.log('Conta marcada como paga no backend:', contaAtualizada);
+
+        // Atualiza a interface
+        if (tableRow) {
+            // Assumindo que a célula de status é a 5ª (índice 4)
+            const statusCell = tableRow.cells[4];
+            if(statusCell) statusCell.textContent = 'pago';
+            console.log('Status atualizado na tabela.');
+        }
+        if (button) {
+            button.remove(); // Remove o botão "Pagar"
+            console.log('Botão "Pagar" removido.');
+        }
+        alert('Conta marcada como paga!');
+
+    } catch(error) {
+        document.body.style.cursor = 'default';
+        console.error('Erro na requisição para marcar como paga:', error);
+        alert('Falha ao marcar conta como paga: ' + error.message);
+    }
+}
+
+
+/**
+ * Converte data "dd/mm/AAAA" para objeto Date para comparação na ordenação.
+ */
+function parseDate(dateStr) {
+    try {
+        if (!dateStr || typeof dateStr !== 'string' || !/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+             return new Date(0);
+        }
+        const [day, month, year] = dateStr.split('/');
+        const date = new Date(Date.UTC(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10)));
+        if (isNaN(date.getTime())) {
+            return new Date(0);
+        }
+        return date;
+    } catch (e) {
+        console.error("Erro ao parsear data para ordenação:", dateStr, e);
+        return new Date(0);
+    }
+}
+
+
+/**
+ * Ordena as linhas da tabela pela data de vencimento (mais próxima primeiro).
+ */
+function ordenarTabela() {
+    const tbody = document.getElementById('tabela-contas')?.getElementsByTagName('tbody')[0];
+    if (!tbody) return;
+
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    rows.sort((a, b) => {
+        // Assumindo vencimento na célula de índice 2
+        const dateStrA = a.cells[2]?.textContent || '';
+        const dateStrB = b.cells[2]?.textContent || '';
+
+        const dateA = parseDate(dateStrA);
+        const dateB = parseDate(dateStrB);
+
+        if (dateA.getTime() === 0 && dateB.getTime() === 0) return 0;
+        if (dateA.getTime() === 0) return 1;
+        if (dateB.getTime() === 0) return -1;
+
+        return dateA - dateB;
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+    console.log("Tabela reordenada por vencimento.");
+}
+
+
+// --- Funções de Carregamento de Dados (exemplo, podem estar em outros arquivos) ---
+async function carregarFornecedores() {
+    console.log("Tentando carregar fornecedores...");
+    try {
+        const response = await fetch('http://localhost:3000/fornecedores'); // Rota da API
+        if (!response.ok) throw new Error(`Erro ${response.status}`);
+        const fornecedores = await response.json();
+        const select = document.getElementById('fornecedor-select'); // ID correto
+        if (!select) return; // Só preenche se o select existir
+        select.innerHTML = '<option value="">Selecione...</option>'; // Limpa antes
+        fornecedores.forEach(f => {
+            select.add(new Option(f.nome, f._id)); // (Texto, Valor)
+        });
+        console.log("Fornecedores carregados.");
+    } catch (error) {
+        console.error('Erro ao carregar fornecedores:', error);
+        // alert('Erro ao carregar fornecedores.');
+    }
 }
 
 async function carregarCategorias() {
+    console.log("Tentando carregar categorias...");
     try {
-        const response = await fetch('http://localhost:3000/categorias');
-        if (!response.ok) throw new Error('Falha ao buscar categorias');
+        const response = await fetch('http://localhost:3000/categorias'); // Rota da API
+        if (!response.ok) throw new Error(`Erro ${response.status}`);
         const categorias = await response.json();
-        const selectCategoria = document.getElementById('categoria-select');
-        const selectSubcategoria = document.getElementById('subcategoria-select');
-        if (!selectCategoria || !selectSubcategoria) return;
-
-        selectCategoria.innerHTML = '<option value="">Selecione...</option>';
-        selectSubcategoria.innerHTML = '<option value="">Selecione uma categoria...</option>';
-        selectSubcategoria.disabled = true;
-
-        categorias.forEach(categoria => {
-            const option = document.createElement('option');
-            option.value = categoria._id;
-            option.textContent = categoria.nome;
-            selectCategoria.appendChild(option);
-        });
-
-        selectCategoria.addEventListener('change', (event) => {
-            const categoriaId = event.target.value;
-            selectSubcategoria.innerHTML = '<option value="">Selecione...</option>';
-            selectSubcategoria.disabled = true;
-            if (categoriaId) {
-                const categoriaSelecionada = categorias.find(c => c._id == categoriaId);
-                if (categoriaSelecionada?.subcategorias?.length > 0) {
-                    selectSubcategoria.disabled = false;
-                    categoriaSelecionada.subcategorias.forEach(sub => {
-                        const option = document.createElement('option');
-                        option.value = sub._id;
-                        option.textContent = sub.nome;
-                        selectSubcategoria.appendChild(option);
-                    });
-                } else { selectSubcategoria.innerHTML = '<option value="">Nenhuma subcategoria</option>'; }
-            } else { selectSubcategoria.innerHTML = '<option value="">Selecione uma categoria...</option>'; }
-        });
-    } catch (error) { console.error('Erro ao carregar categorias:', error); alert('Erro ao carregar categorias.'); }
-}
-
-// --- CONTROLE DA INTERFACE DE PARCELAMENTO ---
-const radioParcelaUnica = document.getElementById('parcela-unica');
-const radioParcelaParcelada = document.getElementById('parcela-parcelada');
-const divQuantidadeParcelas = document.getElementById('quantidade-parcelas-div');
-const inputQuantidadeParcelas = document.getElementById('quantidade-parcelas');
-
-if (radioParcelaUnica && radioParcelaParcelada && divQuantidadeParcelas) {
-    radioParcelaUnica.addEventListener('change', () => { if (radioParcelaUnica.checked) divQuantidadeParcelas.style.display = 'none'; });
-    radioParcelaParcelada.addEventListener('change', () => { if (radioParcelaParcelada.checked) { divQuantidadeParcelas.style.display = 'block'; inputQuantidadeParcelas?.focus(); } });
-} else { console.warn("Elementos do controle de parcelamento não encontrados."); }
-
-// --- FORMATAÇÃO DO CAMPO VALOR (APRIMORADA) ---
-const valorInput = document.getElementById('valor-total');
-
-function formatarMoeda(input) {
-    // Recebe o elemento input (input DOM) e formata para "1.234,56"
-    // Retorna o valor numérico (Number) correspondente, ex: 1234.56
-    if (!input) return 0;
-    let val = String(input.value || '').replace(/\D/g, ''); // apenas dígitos
-    if (val === '') {
-        input.value = '';
-        return 0;
-    }
-    // garante pelo menos 3 dígitos (centavos)
-    val = val.padStart(3, '0');
-    const centavos = val.slice(-2);
-    let reais = val.slice(0, -2);
-    reais = reais.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    input.value = reais + ',' + centavos;
-    const reaisNumeros = reais.replace(/\./g, '') || '0';
-    return parseFloat(reaisNumeros + '.' + centavos);
-}
-
-
-function parseValorFormatado(valorStr) {
-    if (valorStr === null || valorStr === undefined) return NaN;
-    // Remove pontos de milhar e troca vírgula por ponto decimal
-    const cleaned = String(valorStr).replace(/\./g, '').replace(',', '.').trim();
-    const num = parseFloat(cleaned);
-    return isNaN(num) ? NaN : num;
-}
-// Adiciona zeros à esquerda se necessário (para começar pelos centavos)
-valor = valor.padStart(3, '0'); // Garante pelo menos 3 dígitos (ex: 50 -> 050)
-
-// Separa centavos e reais
-let centavos = valor.slice(-2);
-let reais = valor.slice(0, -2);
-
-// Adiciona separador de milhar
-reais = reais.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-
-// Monta o valor formatado
-input.value = `${reais},${centavos}`;
-
-// Retorna o valor numérico para validação/cálculo
-return parseFloat(`${reais}.${centavos}`);
-
-if (valorInput) {
-    valorInput.addEventListener('input', (e) => {
-        formatarMoeda(e.target); // Formata enquanto digita
-    });
-
-    // Garante formatação correta ao sair do campo
-    valorInput.addEventListener('blur', (e) => {
-        const valorNumerico = formatarMoeda(e.target);
-        // Se for zero ou inválido após limpar, deixa vazio ou "0,00"? Vamos deixar vazio.
-        if (valorNumerico === 0) {
-            e.target.value = '';
-        }
-    });
-} else { console.error("Elemento #valor não encontrado!"); }
-
-
-// --- FUNÇÃO DE ENVIO DO FORMULÁRIO (LANÇAMENTO) ---
-const formContas = document.getElementById('form-contas');
-if (formContas) {
-    formContas.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        console.log("Formulário submetido!");
-
-        // --- Coleta de Dados ---
-        console.log("Coletando dados...");
-        const descricao = document.getElementById('descricao')?.value.trim();
-        const dataEmissao = document.getElementById('data-emissao')?.value;
-        const notaFiscal = document.getElementById('nota-fiscal')?.value.trim();
-        const valorFormatado = document.getElementById('valor-total')?.value;
-        const dataPrimeiroVencimento = document.getElementById('data-vencimento')?.value;
-        const fornecedorId = document.getElementById('fornecedor-select')?.value;
-        const categoriaId = document.getElementById('categoria-select')?.value;
-        const subcategoriaId = document.getElementById('subcategoria-select')?.value || null;
-        const tipoParcelamentoChecked = document.querySelector('input[name="tipoParcelamento"]:checked');
-        const tipoParcelamento = tipoParcelamentoChecked?.value;
-        let quantidadeParcelas = 1;
-        if (tipoParcelamento === 'parcelada') {
-            quantidadeParcelas = parseInt(document.getElementById('quantidade-parcelas')?.value || '1', 10);
-        }
-
-        // --- Validações ---
-        console.log("Iniciando validações...");
-        let missing = [];
-        if (!descricao) missing.push("Descrição");
-        if (!dataEmissao) missing.push("Data de Emissão");
-        if (!valorFormatado) missing.push("Valor Total");
-        if (!dataPrimeiroVencimento) missing.push("Vencimento (1ª Parcela)");
-        if (!fornecedorId) missing.push("Fornecedor");
-        if (!categoriaId) missing.push("Categoria");
-        if (!tipoParcelamento) missing.push("Tipo de Parcelamento");
-
-        // VALIDAÇÃO DATA EMISSÃO <= HOJE
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-        const dataEmissaoDate = new Date(dataEmissao + 'T00:00:00Z');
-        if (!isNaN(dataEmissaoDate) && dataEmissaoDate > hoje) {
-            missing.push("Data de Emissão (não pode ser futura)");
-        } else if (isNaN(dataEmissaoDate) && dataEmissao) {
-            missing.push("Data de Emissão (inválida)");
-        }
-
-        // VALIDAÇÃO VALOR > 0 (usando valor numérico obtido da formatação)
-        // Crie esta função em algum lugar do seu script (fora de outras funções)
-        // Precisamos chamar a formatação aqui para obter o número correto
-        const valorNumerico = valorInput ? parseValorFormatado(valorFormatado || '0') : NaN; // Limpa o valor formatado
-        if (isNaN(valorNumerico) || valorNumerico <= 0) {
-            missing.push("Valor Total (deve ser positivo)");
-        }
-
-        // Validação Data Vencimento
-        const dataVencBase = new Date(dataPrimeiroVencimento + 'T00:00:00Z');
-        if (isNaN(dataVencBase)) missing.push("Data do primeiro vencimento inválida");
-
-
-        // Validação Quantidade Parcelas
-        if (tipoParcelamento === 'parcelada' && (isNaN(quantidadeParcelas) || quantidadeParcelas < 2)) {
-            missing.push("Quantidade de parcelas inválida (mínimo 2)");
-        }
-
-        // Exibe erros de validação
-        if (missing.length > 0) {
-            alert(`Campos inválidos ou faltando: ${missing.join(', ')}.`);
-            console.error("Validação falhou:", missing);
-            return;
-        }
-        console.log("Validações passaram.");
-
-        // --- Preparação e Envio das Parcelas ---
-        console.log("Preparando lançamentos...");
-        const promessasDeLancamento = [];
-        const valorTotal = valorNumerico; // Usa o valor numérico validado
-        const valorTotalCentavos = Math.round(valorTotal * 100);
-        const valorParcelaBaseCentavos = Math.floor(valorTotalCentavos / quantidadeParcelas);
-        let somaCentavosCalculada = 0;
-
-        for (let i = 1; i <= quantidadeParcelas; i++) {
-            console.log(`Preparando parcela ${i}...`);
-            let valorDaParcelaAtualCentavos;
-            if (i === quantidadeParcelas) {
-                valorDaParcelaAtualCentavos = valorTotalCentavos - somaCentavosCalculada;
-            } else {
-                valorDaParcelaAtualCentavos = valorParcelaBaseCentavos;
-                somaCentavosCalculada += valorParcelaBaseCentavos;
-            }
-            const valorDaParcelaAtual = (valorDaParcelaAtualCentavos / 100).toFixed(2);
-
-            // Calcular data de vencimento
-            const dataVencimentoAtual = new Date(dataVencBase);
-            if (i > 1) {
-                dataVencimentoAtual.setUTCMonth(dataVencBase.getUTCMonth() + (i - 1));
-                if (dataVencimentoAtual.getUTCDate() < dataVencBase.getUTCDate() && dataVencBase.getUTCMonth() !== (dataVencimentoAtual.getUTCMonth() + 1) % 12) {
-                    dataVencimentoAtual.setUTCDate(0);
-                }
-            }
-            const ano = dataVencimentoAtual.getUTCFullYear();
-            const mes = String(dataVencimentoAtual.getUTCMonth() + 1).padStart(2, '0');
-            const dia = String(dataVencimentoAtual.getUTCDate()).padStart(2, '0');
-            const dataVencFormatada = `${ano}-${mes}-${dia}`;
-
-            const contaParcela = {
-                descricao: descricao + (quantidadeParcelas > 1 ? ` [${i}/${quantidadeParcelas}]` : ''),
-                dataEmissao: dataEmissao,
-                notaFiscal: notaFiscal || null,
-                valor: valorDaParcelaAtual, // Envia como string X.XX
-                dataVencimento: dataVencFormatada,
-                parcela: `${i}/${quantidadeParcelas}`,
-                fornecedorId: fornecedorId,
-                categoriaId: categoriaId,
-                subcategoriaId: subcategoriaId,
-            };
-            console.log(`Dados Parcela ${i}:`, contaParcela);
-
-            promessasDeLancamento.push(
-                fetch('http://localhost:3000/contas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(contaParcela) })
-            );
-        }
-
-        // --- Envio e Tratamento ---
-        console.log("Enviando requisições...");
-        try {
-            document.body.style.cursor = 'wait';
-            const respostas = await Promise.all(promessasDeLancamento);
-            console.log("Respostas recebidas:", respostas);
-            document.body.style.cursor = 'default';
-
-            const falhas = respostas.filter(res => !res.ok);
-
-            if (falhas.length === 0) {
-                console.log("Todos os lançamentos OK."); // LOG 10: Sucesso
-                alert(`Lançamento(s) realizado(s) com sucesso! (${quantidadeParcelas} conta(s))`);
-                formContas.reset();
-                // Resets explícitos
-                if (radioParcelaUnica) radioParcelaUnica.checked = true;
-                if (divQuantidadeParcelas) divQuantidadeParcelas.style.display = 'none';
-                if (inputQuantidadeParcelas) inputQuantidadeParcelas.value = '2';
-                const subSelect = document.getElementById('subcategoria-select');
-                if (subSelect) { subSelect.innerHTML = '<option value="">Selecione...</option>'; subSelect.disabled = true; }
-                if (categoriaSelect) categoriaSelect.value = "";
-                if (fornecedorSelect) fornecedorSelect.value = "";
-                if (valorInput) valorInput.value = "";
-
-                // ***** CORREÇÃO: Garante que carregarContas() é chamado *****
-                await carregarContas(); // Chama e ESPERA a tabela ser recarregada
-                const formCont = document.getElementById('form-container');
-                if (formCont) formCont.classList.remove('visivel'); // Fecha o painel DEPOIS de recarregar
-
-            } else {
-                console.error("Alguns lançamentos falharam."); // LOG 11: Erro parcial
-                alert(`Erro: ${falhas.length} de ${quantidadeParcelas} lançamentos falharam. Verifique o console.`);
-                // Log detalhado...
-                for (let i = 0; i < respostas.length; i++) {
-                    if (!respostas[i].ok) {
-                        try { const errorData = await respostas[i].json(); console.error(`Falha parcela ${i + 1}: Status ${respostas[i].status}`, errorData); }
-                        catch (jsonError) { console.error(`Falha parcela ${i + 1}: Status ${respostas[i].status}`, await respostas[i].text()); }
-                    }
-                }
-            }
-        } catch (error) {
-            document.body.style.cursor = 'default';
-            console.error('Erro de rede:', error); // LOG 12: Erro de rede
-            alert('Erro de conexão ao lançar a(s) conta(s).');
-        }
-    });
-} else { console.error("Formulário #form-contas não encontrado!"); }
-
-
-// --- FUNÇÃO PARA CARREGAR CONTAS NA TABELA (COM BOTÃO EXCLUIR) ---
-async function carregarContas() {
-    console.log("Iniciando carregarContas()..."); // Log para verificar chamada
-    try {
-        const response = await fetch('http://localhost:3000/contas');
-        if (!response.ok) throw new Error(`Falha ao buscar contas (${response.status})`);
-        const contas = await response.json();
-        const tbody = document.getElementById('lista-contas-tbody');
-        if (!tbody) { console.error('Elemento #lista-contas-tbody não encontrado!'); return; }
-        tbody.innerHTML = '';
-        console.log(`${contas.length} contas recebidas.`); // Log quantidade
-
-        if (contas.length === 0) {
-            const tr = tbody.insertRow();
-            const td = tr.insertCell();
-            td.colSpan = 7; td.textContent = 'Nenhuma conta lançada.'; td.style.textAlign = 'center';
-            return;
-        }
-
-        contas.forEach(conta => {
-            const tr = tbody.insertRow();
-            tr.setAttribute('data-conta-id-row', conta.id); // Adiciona ID na linha para referência futura
-
-            const dataVenc = new Date(conta.dataVencimento + 'T00:00:00Z');
-            const dataFormatada = !isNaN(dataVenc) ? dataVenc.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Inválida';
-            const valorNum = parseFloat(conta.valor);
-            const valorFormatado = !isNaN(valorNum) ? valorNum.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'Inválido';
-
-            tr.insertCell().textContent = conta.fornecedorNome || 'N/D';
-            tr.insertCell().textContent = conta.descricao;
-            tr.insertCell().textContent = dataFormatada;
-            tr.insertCell().textContent = conta.parcela || '-';
-            const valorCell = tr.insertCell();
-            valorCell.textContent = valorFormatado;
-            valorCell.style.textAlign = 'right';
-
-            const situacaoCell = tr.insertCell();
-            const statusBadge = document.createElement('b');
-            statusBadge.textContent = conta.status.charAt(0).toUpperCase() + conta.status.slice(1);
-            statusBadge.classList.add(conta.status === 'paga' ? 'status-paga' : 'status-pendente');
-            situacaoCell.appendChild(statusBadge);
-            situacaoCell.style.textAlign = 'center';
-
-            // Célula de Ações
-            const acoesCell = tr.insertCell();
-            acoesCell.style.textAlign = 'center';
-
-            // Botão Editar
-            const btnEditar = document.createElement('button');
-            btnEditar.innerHTML = '✏️'; // Emoji Lápis
-            btnEditar.classList.add('btn-acao', 'btn-editar');
-            btnEditar.title = "Editar Conta";
-            btnEditar.onclick = () => editarConta(conta.id);
-            acoesCell.appendChild(btnEditar);
-
-            // Botão Excluir
-            const btnExcluir = document.createElement('button');
-            btnExcluir.innerHTML = '🗑️'; // Emoji Lixeira
-            btnExcluir.classList.add('btn-acao', 'btn-excluir');
-            btnExcluir.title = "Excluir Conta";
-            btnExcluir.onclick = () => excluirConta(conta.id); // Chama a nova função
-            acoesCell.appendChild(btnExcluir);
-
-            // Botão Dar Baixa (se pendente)
-            if (conta.status === 'pendente') {
-                const btnBaixar = document.createElement('button');
-                btnBaixar.innerHTML = '✔️'; // Emoji Check
-                btnBaixar.classList.add('btn-acao', 'btn-baixar');
-                btnBaixar.title = "Dar Baixa";
-                btnBaixar.setAttribute('data-conta-id', conta.id);
-                btnBaixar.onclick = () => darBaixa(conta.id);
-                acoesCell.appendChild(btnBaixar);
+        const select = document.getElementById('categoria-select'); // ID correto
+        if (!select) return; // Só preenche se o select existir
+        select.innerHTML = '<option value="">Selecione...</option>'; // Limpa antes
+        categorias.forEach(c => {
+            // Adiciona apenas categorias principais (assumindo que elas não têm 'categoriaPai')
+            if (!c.categoriaPai) {
+                 select.add(new Option(c.nome, c._id)); // (Texto, Valor)
             }
         });
-        console.log("Tabela de contas atualizada."); // Log fim
+        console.log("Categorias carregadas.");
+        // Chama atualizarSubcategorias para garantir o estado inicial correto
+        atualizarSubcategorias();
     } catch (error) {
-        console.error('Erro detalhado ao carregar contas:', error); // Log erro detalhado
-        const tbody = document.getElementById('lista-contas-tbody');
-        if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="color: red; text-align: center;">Erro ao carregar contas: ${error.message}.</td></tr>`;
+        console.error('Erro ao carregar categorias:', error);
+        // alert('Erro ao carregar categorias.');
     }
 }
-
-
-// --- FUNÇÃO PARA DAR BAIXA --- (sem alterações funcionais)
-async function darBaixa(id) {
-    if (!id || !confirm(`Dar baixa na conta ID ${id}?`)) return;
-    console.log("Tentando dar baixa:", id);
-    try {
-        const response = await fetch(`http://localhost:3000/contas/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' } });
-        if (response.ok) {
-            alert('Conta baixada!');
-            await carregarContas(); // Espera recarregar
-        } else {
-            const errorData = await response.json().catch(() => ({})); alert(`Erro: ${errorData.message || 'Falha ao dar baixa.'}`); console.error("Erro backend (baixa):", errorData);
-        }
-    } catch (error) { console.error('Erro de rede (baixa):', error); alert('Erro de conexão ao dar baixa.'); }
-}
-
-// --- FUNÇÃO PARA EDITAR CONTA (Placeholder) ---
-function editarConta(id) {
-    console.log("Editar conta ID:", id);
-    alert(`Editar Conta (ID: ${id}) - Não implementado.`);
-}
-
-// --- NOVA FUNÇÃO PARA EXCLUIR CONTA ---
-async function excluirConta(id) {
-    if (!id) { console.error("ID inválido para excluir:", id); alert("Erro: ID inválido."); return; }
-    // Confirmação mais enfática para exclusão
-    if (!confirm(`ATENÇÃO!\n\nTem certeza que deseja EXCLUIR PERMANENTEMENTE a conta ID ${id}?`)) {
-        return; // Cancela se o usuário não confirmar
-    }
-
-    console.log("Tentando excluir a conta ID:", id);
-    try {
-        document.body.style.cursor = 'wait'; // Indicador visual
-
-        const response = await fetch(`http://localhost:3000/contas/${id}`, {
-            method: 'DELETE', // Método HTTP DELETE
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-        document.body.style.cursor = 'default';
-
-        if (response.ok || response.status === 204) { // 200 OK ou 204 No Content
-            alert('Conta excluída com sucesso!');
-            await carregarContas(); // Recarrega a tabela para remover a linha
-        } else {
-            const errorData = await response.json().catch(() => ({ message: 'Erro desconhecido ao tentar excluir.' }));
-            alert(`Erro ao excluir a conta: ${errorData.message}`);
-            console.error("Erro do backend ao excluir:", errorData);
-        }
-    } catch (error) {
-        document.body.style.cursor = 'default';
-        console.error('Erro de rede ao excluir conta:', error);
-        alert('Não foi possível conectar ao servidor para excluir a conta.');
-    }
-}
-
-
-// --- CONTROLE DO PAINEL LATERAL --- (sem alterações)
-const btnMostrarForm = document.getElementById('btn-mostrar-form');
-const btnFecharForm = document.getElementById('btn-fechar-form');
-const formContainer = document.getElementById('form-container');
-
-if (btnMostrarForm && formContainer) {
-    btnMostrarForm.addEventListener('click', () => { formContainer.classList.add('visivel'); });
-}
-if (btnFecharForm && formContainer) {
-    btnFecharForm.addEventListener('click', () => { formContainer.classList.remove('visivel'); });
-}
-
-// --- CARREGAMENTO INICIAL ---
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOM carregado, iniciando...");
-    if (typeof carregarFornecedores === 'function') carregarFornecedores(); else console.error("Função carregarFornecedores não definida");
-    if (typeof carregarCategorias === 'function') carregarCategorias(); else console.error("Função carregarCategorias não definida");
-    if (typeof carregarContas === 'function') carregarContas(); else console.error("Função carregarContas não definida");
-});
